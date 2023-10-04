@@ -455,7 +455,7 @@ WI_df <- map2(.x = expand.grid(unique(FFL_Table$Team), unique(FFL_Table$Team))$V
 
 
 # Subtitle text 
-sub_txt <- "Wondering how the schedule shuffle changed our fate? This table shows what each teams' record (win percentage) would be if they played other teams' schedules. It omits any games they would have played against themselves. The teams are arranged by mean schedule win percentage."
+sub_txt <- "Wondering how the schedule shuffle changed our fate? This table shows what each teams' record (win percentage) would be if they played other teams' schedules. It omits any games they would have played against themselves. The teams are arranged by mean schedule win percentage (easiest to hardest in descending order). Pick a team and look down the column to see how they'd perform if they had others' schedules. Pick a team name and look across the rows to see how other teams would perform with its schedule."
 
 
 # Find the schedules ranking order (easiest to hardest) 
