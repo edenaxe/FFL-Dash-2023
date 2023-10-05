@@ -368,12 +368,12 @@ scatter_df %>%
   geom_label_repel(aes(color = Quadrant), size = 2, fill = "white", 
                    min.segment.length = unit(0, "lines"), fontface = "bold") +
   scale_y_continuous(limits = c(low_range, high_range), 
-                     breaks = c(low_range + 150, mid_pt, high_range - 150),
+                     breaks = c(low_range + 50, mid_pt, high_range - 50),
                      labels = c("Below Average \n Points For", 
                                 paste(scales::number(mid_pt, big.mark = ","), "\nPoints"),
                                 "Above Average \n Points For")) +
   scale_x_continuous(limits = c(low_range, high_range), 
-                     breaks = c(low_range + 150, mid_pt, high_range - 150),
+                     breaks = c(low_range + 50, mid_pt, high_range - 50),
                      labels = c("Below Average \n Points Against", 
                                 paste(scales::number(mid_pt, big.mark = ","), "\nPoints"),
                                 "Above Average \n Points Against")) +
