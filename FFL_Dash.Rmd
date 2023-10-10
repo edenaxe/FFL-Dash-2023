@@ -215,7 +215,7 @@ FFL_Table %>%
   cols_width(
     columns = 1 ~ px(50),
     columns = 2 ~ px(40),
-    columns = 3 ~ px(260),
+    columns = 3 ~ px(270),
     columns = 4:9 ~ px(100),
     columns = 10 ~px(140)) %>%
   # Update column names
@@ -301,7 +301,7 @@ ig = lapply(1:nrow(mdf),
                    xref = "paper", yref = "y",
                    xanchor = "center", yanchor = "middle",
                    # Adjust this (toward 1) as weeks progress
-                   x = 0.86,
+                   x = 0.89,
                    y = mdf[i, ]$Position,
                    sizex = 0.5, sizey = 0.5)
             })
