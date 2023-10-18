@@ -300,8 +300,8 @@ ig = lapply(1:nrow(mdf),
               list(source = raster2uri(img),
                    xref = "paper", yref = "y",
                    xanchor = "center", yanchor = "middle",
-                   # Adjust this (toward 1) as weeks progress
-                   x = 0.89,
+                   # Will auto adjust the position of the icon to the right spot
+                   x = (parse_number(current_wk)/(parse_number(current_wk)+1))+0.05,
                    y = mdf[i, ]$Position,
                    sizex = 0.5, sizey = 0.5)
             })
