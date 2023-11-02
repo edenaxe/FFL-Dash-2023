@@ -301,7 +301,7 @@ ig = lapply(1:nrow(mdf),
                    xref = "paper", yref = "y",
                    xanchor = "center", yanchor = "middle",
                    # Will auto adjust the position of the icon to the right spot
-                   x = (parse_number(current_wk)/(parse_number(current_wk)+1))+0.05,
+                   x = ((parse_number(current_wk)+0.35)/(parse_number(current_wk)+1)),
                    y = mdf[i, ]$Position,
                    sizex = 0.5, sizey = 0.5)
             })
@@ -367,13 +367,13 @@ scatter_df %>%
   scale_color_manual(values = c("#b6eb60", "#eb633d", "#ebae34","#0bb83c")) +
   geom_label_repel(aes(color = Quadrant), size = 2, fill = "white", 
                    min.segment.length = unit(0, "lines"), fontface = "bold") +
-  scale_y_continuous(limits = c(low_range, high_range), 
-                     breaks = c(low_range + 50, mid_pt, high_range - 50),
+  scale_y_continuous(limits = c(low_range*.9, high_range*1.1), 
+                     breaks = c(low_range + 40, mid_pt, high_range - 40),
                      labels = c("Below Average \n Points For", 
                                 paste(scales::number(mid_pt, big.mark = ","), "\nPoints"),
                                 "Above Average \n Points For")) +
-  scale_x_continuous(limits = c(low_range, high_range), 
-                     breaks = c(low_range + 50, mid_pt, high_range - 50),
+  scale_x_continuous(limits = c(low_range*.9, high_range*1.1), 
+                     breaks = c(low_range + 40, mid_pt, high_range - 40),
                      labels = c("Below Average \n Points Against", 
                                 paste(scales::number(mid_pt, big.mark = ","), "\nPoints"),
                                 "Above Average \n Points Against")) +
@@ -517,6 +517,126 @@ WI_df %>%
     locations = cells_body(columns = 2:13)) %>%
   tab_options(
     table.font.size = '12px') 
+
+```
+
+# Win / Loss Margins
+
+## Row
+
+### 
+
+```{r wl table, echo=FALSE, include=FALSE}
+
+# A table for margins by week
+FFL_Table %>%
+  mutate(Pt_Diff = `Points For` - `Points Against`,
+         Abs_Pt_Diff = abs(`Points For` - `Points Against`)) %>%
+  group_by(Week) %>%
+  summarize(`Average Margin` = round(mean(Abs_Pt_Diff), digits = 1),
+            `Median Margin` = round(median(Abs_Pt_Diff), digits = 1),
+            `Closest Contest` = round(min(Abs_Pt_Diff), digits = 1),
+            `Biggest Blowout` = round(max(Abs_Pt_Diff), digits = 1)) %>%
+  gt() %>%
+  cols_align(
+    align = "center",
+    columns = c(2:5)) %>%
+  gt_theme_guardian()
+
+```
+
+
+```{r margins, echo=FALSE}
+
+# A function to retrieve margins for a single team
+get_margins <- function(team_name) {
+  
+  FFL_Table %>%
+  mutate(Pt_Diff = `Points For` - `Points Against`,
+         Abs_Pt_Diff = abs(`Points For` - `Points Against`)) %>%
+  filter(Team == team_name) %>%
+  group_by(Team) %>%
+  summarize(`Average Absolute Margin` = round(mean(Abs_Pt_Diff), digits = 1)) %>%
+  left_join(
+    FFL_Table %>%
+      mutate(Pt_Diff = `Points For` - `Points Against`,
+             Abs_Pt_Diff = abs(`Points For` - `Points Against`)) %>%
+      filter(Team == team_name,
+             Win == 1) %>%
+      group_by(Team) %>%
+      summarize(`Average Win Margin` = round(mean(Pt_Diff), digits = 1)) %>% 
+      left_join(
+        FFL_Table %>%
+          mutate(Pt_Diff = `Points For` - `Points Against`,
+                 Abs_Pt_Diff = abs(`Points For` - `Points Against`)) %>%
+          filter(Team == team_name,
+                 Win == 0) %>%
+          group_by(Team) %>%
+          summarize(`Average Loss Margin` = round(mean(Pt_Diff), digits = 1)),
+        by = "Team"
+      ), 
+    by = "Team"
+  )
+  
+}
+
+
+# margins data frame
+margins_df <- map(
+  .x = unique(Teams),
+  .f = get_margins) %>%
+  bind_rows() %>%
+  arrange(`Average Absolute Margin`)
+
+
+# margins data frame, long version 
+margins_long <- margins_df %>% 
+  pivot_longer(cols = -Team, names_to = "Margin Type", values_to = "Margin")
+
+
+# Generate the lollipop plot 
+margins_df %>%
+  mutate(Team = fct_reorder(Team, `Average Absolute Margin`)) %>%
+  ggplot() +
+  geom_segment(aes(x = Team, xend = Team, 
+                   y = 0, yend = `Average Win Margin`,
+                   color = `Average Win Margin`),
+               size = 1.5) +
+  geom_segment(aes(x = Team, xend = Team, 
+                   y = 0, yend = `Average Loss Margin`,
+                   color = `Average Loss Margin`),
+               size = 1.5) +
+  # Add a color gradient from red to green
+  scale_color_gradient2(low = "#d43b20", mid = "#dbcb53", midpoint = 0, high = "#2ac955", guide = "none") + 
+  # Add an intercept at 0 to signify the win/loss transition
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") +
+  # Add a point for the win margin segment
+  geom_point(
+    data = margins_long %>%
+      filter(`Margin Type` == "Average Win Margin"),
+    aes(x = Team, y = Margin),
+    color = "#235e2e", size = 2) +
+  # Add a point for the loss margin segment
+  geom_point(
+    data = margins_long %>%
+      filter(`Margin Type` == "Average Loss Margin"),
+    aes(x = Team, y = Margin),
+    color = "#941820", size = 2) +
+  # Add a margin label to the end of each point
+  geom_text(
+    data = margins_long %>%
+      filter(`Margin Type` != "Average Absolute Margin"),
+    aes(x = Team, y = Margin, label = Margin),
+    size = 3,
+    vjust = -1.25,
+    color = ifelse(margins_long %>%
+                     filter(`Margin Type` != "Average Absolute Margin") %>% .$Margin > 0, "#235e2e", "#941820")) +
+  # Flip the plot axes 
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Average Win / Loss Margin by Team",
+       x = "", y = "Margin",
+       color = "Margin")
 
 ```
 
