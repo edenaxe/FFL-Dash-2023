@@ -68,7 +68,7 @@ FFL_Table <- read_excel("FFL_Data.xlsx", sheet = "2023 Results") %>%
 
 # Color palette, variables, etc. (set by alphabetical order)
 ffl_pal <- c(
-  "#2C2C2C", "#4d806e", "#6c53a9", "#9CB2BD", "#ECE36C", "#8D8DB9", 
+  "#2C2C2C", "#4d806e", "#74372F", "#6c53a9", "#9CB2BD", "#ECE36C", 
   "#F2384D", "#FFB426", "#75AC17", "#327FFF", "#504112", "#4C8BA7" 
 )
 
@@ -564,7 +564,8 @@ get_margins <- function(team_name) {
       filter(Team == team_name,
              Win == 1) %>%
       group_by(Team) %>%
-      summarize(`Average Win Margin` = round(mean(Pt_Diff), digits = 1)) %>% 
+      summarize(`Average Win Margin` = round(mean(Pt_Diff), digits = 1),
+                `Win Count` = as.integer(n())) %>% 
       left_join(
         FFL_Table %>%
           mutate(Pt_Diff = `Points For` - `Points Against`,
@@ -572,7 +573,8 @@ get_margins <- function(team_name) {
           filter(Team == team_name,
                  Win == 0) %>%
           group_by(Team) %>%
-          summarize(`Average Loss Margin` = round(mean(Pt_Diff), digits = 1)),
+          summarize(`Average Loss Margin` = round(mean(Pt_Diff), digits = 1),
+                    `Loss Count` = as.integer(n())),
         by = "Team"
       ), 
     by = "Team"
@@ -586,12 +588,26 @@ margins_df <- map(
   .x = unique(Teams),
   .f = get_margins) %>%
   bind_rows() %>%
-  arrange(`Average Absolute Margin`)
-
+  arrange(`Average Absolute Margin`) %>%
+  mutate(Win_Label = paste0(`Average Win Margin`, " (n=", `Win Count`, ")"),
+         Loss_Label = paste0(`Average Loss Margin`, " (n=", `Loss Count`, ")"))
 
 # margins data frame, long version 
 margins_long <- margins_df %>% 
-  pivot_longer(cols = -Team, names_to = "Margin Type", values_to = "Margin")
+  select(-`Win Count`, -`Loss Count`) %>%
+  pivot_longer(cols = c(`Average Absolute Margin`, 
+                        `Average Win Margin`, 
+                        `Average Loss Margin`), 
+               names_to = "Margin Type", 
+               values_to = "Margin") %>%
+  mutate(Label = 
+           case_when(
+             `Margin Type` == "Average Win Margin" ~ Win_Label,
+             `Margin Type` == "Average Loss Margin" ~ Loss_Label,
+             TRUE ~ "")) %>%
+  select(-Win_Label, -Loss_Label)
+
+
 
 
 # Generate the lollipop plot 
@@ -626,9 +642,9 @@ margins_df %>%
   geom_text(
     data = margins_long %>%
       filter(`Margin Type` != "Average Absolute Margin"),
-    aes(x = Team, y = Margin, label = Margin),
-    size = 3,
-    vjust = -1.25,
+    aes(x = Team, y = Margin, label = Label),
+    size = 1.5,
+    vjust = -1.5,
     color = ifelse(margins_long %>%
                      filter(`Margin Type` != "Average Absolute Margin") %>% .$Margin > 0, "#235e2e", "#941820")) +
   # Flip the plot axes 
