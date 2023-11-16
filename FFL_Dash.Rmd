@@ -68,8 +68,8 @@ FFL_Table <- read_excel("FFL_Data.xlsx", sheet = "2023 Results") %>%
 
 # Color palette, variables, etc. (set by alphabetical order)
 ffl_pal <- c(
-  "#2C2C2C", "#4d806e", "#74372F", "#6c53a9", "#9CB2BD", "#ECE36C", 
-  "#F2384D", "#FFB426", "#75AC17", "#327FFF", "#504112", "#4C8BA7" 
+  "#2C2C2C", "#FFB426", "#4d806e", "#74372F", "#6c53a9", "#9CB2BD",  
+  "#ECE36C", "#F2384D", "#75AC17", "#327FFF", "#504112", "#4C8BA7" 
 )
 
 current_wk <- paste("Week", max(parse_number(FFL_Table$Week)))
@@ -346,34 +346,42 @@ high_range <- mid_pt + round(max(abs(c(max_PF, max_PF, min_PF, min_PA) - mid_pt)
 
 # Create the scatter plot
 scatter_df %>%
-  # Generate new column with four quadrants based on the mid point (average)
-  mutate(Quadrant = case_when(`Cumulative Points For` > mid_pt & `Cumulative Points Against` > mid_pt   ~ "Q1",
-                              `Cumulative Points For` <= mid_pt & `Cumulative Points Against` > mid_pt  ~ "Q2",
-                              `Cumulative Points For` <= mid_pt & `Cumulative Points Against` <= mid_pt ~ "Q3",
-                              TRUE ~ "Q4"),
-         # Generate new label column that takes the first 1-2 words in Team and adds position in ()
-         Label = map(.x = Team, .f = function(x) {
-           ifelse(nchar(unlist(strsplit(x, " "))[[1]]) > 4,
-                  paste0(unlist(strsplit(x, " "))[[1]], 
-                         " (", scatter_df[scatter_df$Team == x, ]$Position, ")"),
-                  paste0(unlist(strsplit(x, " "))[[1]], " ", unlist(strsplit(x, " "))[[2]], 
-                         " (", scatter_df[scatter_df$Team == x, ]$Position, ")" ))
-           
-         })) %>%
+  mutate(
+    # Generate new column with four quadrants based on the mid point (average)
+    Quadrant = case_when(`Cumulative Points For` > mid_pt & `Cumulative Points Against` < mid_pt   ~ "Q1",
+                         `Cumulative Points For` > mid_pt & `Cumulative Points Against` > mid_pt   ~ "Q2",
+                         `Cumulative Points For` <= mid_pt & `Cumulative Points Against` <= mid_pt ~ "Q3",
+                         `Cumulative Points For` <= mid_pt & `Cumulative Points Against` > mid_pt  ~ "Q4"),
+    # Generate new label column that takes the first 1-2 words in Team and adds position in ()
+    Label = map(.x = Team, .f = function(x) {
+      ifelse(nchar(unlist(strsplit(x, " "))[[1]]) > 4,
+             paste0(unlist(strsplit(x, " "))[[1]], 
+                    " (", scatter_df[scatter_df$Team == x, ]$Position, ")"),
+             paste0(unlist(strsplit(x, " "))[[1]], " ", unlist(strsplit(x, " "))[[2]], 
+                    " (", scatter_df[scatter_df$Team == x, ]$Position, ")" ))
+      
+    }),
+    # Generate new column for coloring the points based on their quadrants
+    quad_col = case_when(Quadrant == "Q1" ~ "#0bb83c",
+                         Quadrant == "Q2" ~ "#b6eb60",
+                         Quadrant == "Q3" ~ "#ebae34",
+                         Quadrant == "Q4" ~ "#eb633d")
+  ) %>%
   ggplot(aes(`Cumulative Points Against`, `Cumulative Points For`, label = Label, color = Quadrant)) +
-  geom_hline(yintercept = mid_pt, color = "#4d4e4f", linetype = "dotted", size = 1) +
-  geom_vline(xintercept = mid_pt, color = "#4d4e4f", linetype = "dotted", size = 1) +
-  geom_point(size = 3) +
-  scale_color_manual(values = c("#b6eb60", "#eb633d", "#ebae34","#0bb83c")) +
-  geom_label_repel(aes(color = Quadrant), size = 2, fill = "white", 
+  geom_hline(yintercept = mid_pt, color = "#4d4e4f", linetype = "dotted", linewidth = 1) +
+  geom_vline(xintercept = mid_pt, color = "#4d4e4f", linetype = "dotted", linewidth = 1) +
+  geom_point(aes(color = quad_col), size = 3) +
+  #scale_color_manual(values = c("#b6eb60", "#eb633d", "#ebae34","#0bb83c")) +
+  scale_color_identity() +
+  geom_label_repel(aes(color = quad_col), size = 2, fill = "white", 
                    min.segment.length = unit(0, "lines"), fontface = "bold") +
-  scale_y_continuous(limits = c(low_range*.9, high_range*1.1), 
-                     breaks = c(low_range + 40, mid_pt, high_range - 40),
+  scale_y_continuous(limits = c(low_range*0.95, high_range*1.05), 
+                     breaks = c(mean(c(mid_pt, low_range*0.95)), mid_pt, mean(c(mid_pt, high_range*1.05))),
                      labels = c("Below Average \n Points For", 
                                 paste(scales::number(mid_pt, big.mark = ","), "\nPoints"),
                                 "Above Average \n Points For")) +
-  scale_x_continuous(limits = c(low_range*.9, high_range*1.1), 
-                     breaks = c(low_range + 40, mid_pt, high_range - 40),
+  scale_x_continuous(limits = c(low_range*0.95, high_range*1.05), 
+                     breaks = c(mean(c(mid_pt, low_range*0.95)), mid_pt, mean(c(mid_pt, high_range*1.05))),
                      labels = c("Below Average \n Points Against", 
                                 paste(scales::number(mid_pt, big.mark = ","), "\nPoints"),
                                 "Above Average \n Points Against")) +
