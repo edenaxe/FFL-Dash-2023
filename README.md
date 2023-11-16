@@ -19,6 +19,7 @@ Currently, the dashboard generates and displays the following visuals:
 - A quadrant chart 
 - A points boxplot chart
 - A schedule what if analysis table
+- A win/loss margin chart
 
 -------------------------------------------
 
