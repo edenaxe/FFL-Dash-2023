@@ -375,13 +375,13 @@ scatter_df %>%
   scale_color_identity() +
   geom_label_repel(aes(color = quad_col), size = 2, fill = "white", 
                    min.segment.length = unit(0, "lines"), fontface = "bold") +
-  scale_y_continuous(limits = c(low_range*0.95, high_range*1.05), 
-                     breaks = c(mean(c(mid_pt, low_range*0.95)), mid_pt, mean(c(mid_pt, high_range*1.05))),
+  scale_y_continuous(limits = c(low_range*0.9, high_range*1.1), 
+                     breaks = c(mean(c(mid_pt, low_range*0.9)), mid_pt, mean(c(mid_pt, high_range*1.1))),
                      labels = c("Below Average \n Points For", 
                                 paste(scales::number(mid_pt, big.mark = ","), "\nPoints"),
                                 "Above Average \n Points For")) +
-  scale_x_continuous(limits = c(low_range*0.95, high_range*1.05), 
-                     breaks = c(mean(c(mid_pt, low_range*0.95)), mid_pt, mean(c(mid_pt, high_range*1.05))),
+  scale_x_continuous(limits = c(low_range*0.9, high_range*1.1), 
+                     breaks = c(mean(c(mid_pt, low_range*0.9)), mid_pt, mean(c(mid_pt, high_range*1.1))),
                      labels = c("Below Average \n Points Against", 
                                 paste(scales::number(mid_pt, big.mark = ","), "\nPoints"),
                                 "Above Average \n Points Against")) +
@@ -392,7 +392,7 @@ scatter_df %>%
         plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5),
         axis.line = element_line(colour = "#4d4e4f", size = 1),
-        axis.text = element_text(face = c('bold', 'plain','bold'), size = c(9, 8, 9)),
+        axis.text = element_text(face = c('bold', 'plain','bold'), size = c(8, 8, 8)),
         panel.background = element_rect(fill = "#f5f4f0"),
         panel.border = element_rect(color = "#4d4e4f", fill = NA, size = 1))
 
